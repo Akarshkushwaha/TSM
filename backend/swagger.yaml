@@ -1,0 +1,104 @@
+openapi: 3.0.0
+info:
+  title: Task Management System API
+  version: 1.0.0
+  description: API documentation for the intern assignment Task Management System.
+servers:
+  - url: 'http://localhost:5000'
+paths:
+  /api/auth/register:
+    post:
+      summary: Register a new user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [user, admin]
+      responses:
+        '201':
+          description: User created
+        '400':
+          description: User already exists / Invalid data
+  /api/auth/login:
+    post:
+      summary: Login user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Successful authentication
+  /api/tasks:
+    get:
+      summary: Get user tasks
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: priority
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create a new task (multipart/form-data for PDF uploads)
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                priority:
+                  type: string
+                documents:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  maxItems: 3
+      responses:
+        '201':
+          description: Task created
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
