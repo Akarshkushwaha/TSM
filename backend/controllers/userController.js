@@ -8,9 +8,24 @@ const getUsers = async (req, res) => {
     const pageSize = 10;
     const page = Number(req.query.pageNumber) || 1;
 
-    const count = await User.countDocuments();
-    const users = await User.find({})
+    // Filtering
+    const query = {};
+    if (req.query.email) {
+      query.email = { $regex: req.query.email, $options: 'i' };
+    }
+    if (req.query.role) {
+      query.role = req.query.role;
+    }
+
+    // Sorting
+    let sortOption = { createdAt: -1 };
+    if (req.query.sortBy === 'email') sortOption = { email: 1 };
+    if (req.query.sortBy === 'role') sortOption = { role: 1 };
+
+    const count = await User.countDocuments(query);
+    const users = await User.find(query)
       .select('-password')
+      .sort(sortOption)
       .limit(pageSize)
       .skip(pageSize * (page - 1));
 

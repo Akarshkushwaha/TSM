@@ -26,6 +26,12 @@ const createTask = async (req, res) => {
     });
 
     const createdTask = await task.save();
+    
+    // Emit event
+    if (req.io) {
+      req.io.emit('task:created', createdTask);
+    }
+    
     res.status(201).json(createdTask);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -133,6 +139,12 @@ const updateTask = async (req, res) => {
     }
 
     const updatedTask = await task.save();
+
+    // Emit event
+    if (req.io) {
+      req.io.emit('task:updated', updatedTask);
+    }
+
     res.json(updatedTask);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -152,7 +164,14 @@ const deleteTask = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this task' });
     }
 
+    const deletedTaskId = task._id;
     await task.deleteOne();
+
+    // Emit event
+    if (req.io) {
+      req.io.emit('task:deleted', deletedTaskId);
+    }
+
     res.json({ message: 'Task removed' });
   } catch (error) {
     res.status(500).json({ message: error.message });

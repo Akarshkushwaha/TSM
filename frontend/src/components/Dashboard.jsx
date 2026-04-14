@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
 import { logout } from '../slices/authSlice';
-import { useGetTasksQuery, useDeleteTaskMutation } from '../slices/apiSlice';
+import { useGetTasksQuery, useDeleteTaskMutation, apiSlice } from '../slices/apiSlice';
 import TaskModal from './TaskModal';
-
-const BACKEND_URL = 'http://localhost:5000';
 
 const Dashboard = () => {
   const { userInfo } = useSelector((state) => state.auth);
@@ -19,7 +18,7 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Pass filtering, sorting, and pagination to API
-  const { data, isLoading, error } = useGetTasksQuery({
+  const { data, isLoading, error, refetch } = useGetTasksQuery({
     status: statusFilter || undefined,
     priority: priorityFilter || undefined,
     sortBy: sortBy || undefined,
@@ -27,6 +26,28 @@ const Dashboard = () => {
   });
 
   const [deleteTask] = useDeleteTaskMutation();
+
+  // Socket.io for Real-time Updates
+  useEffect(() => {
+    const socket = io(); // Connects to the same host that serves the frontend
+
+    socket.on('task:created', () => {
+      // Invalidate tags or refetch to get fresh data
+      dispatch(apiSlice.util.invalidateTags(['Task']));
+    });
+
+    socket.on('task:updated', () => {
+      dispatch(apiSlice.util.invalidateTags(['Task']));
+    });
+
+    socket.on('task:deleted', () => {
+      dispatch(apiSlice.util.invalidateTags(['Task']));
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [dispatch]);
 
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -202,7 +223,7 @@ const Dashboard = () => {
                       </div>
                     </div>
                     
-                    {/* Attached Documents - Clickable Links */}
+                    {/* Attached Documents - Downloads via API Endpoint */}
                     {task.attachedDocuments && task.attachedDocuments.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-gray-100">
                         <p className="text-xs font-medium text-gray-500 mb-1">Attachments:</p>
@@ -210,7 +231,7 @@ const Dashboard = () => {
                           {task.attachedDocuments.map((doc, index) => (
                             <a
                               key={index}
-                              href={`${BACKEND_URL}/uploads/${doc.filename}`}
+                              href={`/api/tasks/${task._id}/documents/${index}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded hover:bg-blue-100 transition-colors"
