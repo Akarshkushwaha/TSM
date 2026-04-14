@@ -7,6 +7,8 @@ const createTask = async (req, res) => {
   try {
     const { title, description, status, priority, dueDate, assignedTo } = req.body;
     
+    console.log(`[DEBUG] Creating task. Files received: ${req.files ? req.files.length : 0}`);
+    
     // Process attached documents from multer
     const attachedDocuments = req.files ? req.files.map(file => ({
       filename: file.filename,
@@ -123,6 +125,8 @@ const updateTask = async (req, res) => {
     task.priority = req.body.priority || task.priority;
     task.dueDate = req.body.dueDate || task.dueDate;
     task.assignedTo = req.body.assignedTo || task.assignedTo;
+
+    console.log(`[DEBUG] Updating task ${req.params.id}. Files received: ${req.files ? req.files.length : 0}`);
 
     if (req.files && req.files.length > 0) {
       const newDocs = req.files.map(file => ({
