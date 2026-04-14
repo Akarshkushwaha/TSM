@@ -29,7 +29,8 @@ const Dashboard = () => {
 
   // Socket.io for Real-time Updates
   useEffect(() => {
-    const socket = io(); // Connects to the same host that serves the frontend
+    // In production, we need to point to the deployed backend URL
+    const socket = io(import.meta.env.VITE_API_BASE_URL || window.location.origin); 
 
     socket.on('task:created', () => {
       // Invalidate tags or refetch to get fresh data
