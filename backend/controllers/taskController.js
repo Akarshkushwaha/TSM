@@ -10,7 +10,6 @@ const createTask = async (req, res) => {
     // Process attached documents from multer
     const attachedDocuments = req.files ? req.files.map(file => ({
       filename: file.filename,
-      path: file.path,
       mimetype: file.mimetype,
     })) : [];
 
@@ -128,7 +127,6 @@ const updateTask = async (req, res) => {
     if (req.files && req.files.length > 0) {
       const newDocs = req.files.map(file => ({
         filename: file.filename,
-        path: file.path,
         mimetype: file.mimetype,
       }));
       task.attachedDocuments = [...task.attachedDocuments, ...newDocs];

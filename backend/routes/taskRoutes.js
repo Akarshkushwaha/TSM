@@ -36,7 +36,7 @@ router.get('/:id/documents/:docIndex', protect, async (req, res) => {
     }
 
     const doc = task.attachedDocuments[docIndex];
-    const filePath = path.resolve(doc.path);
+    const filePath = path.join(__dirname, '..', 'uploads', doc.filename);
     res.download(filePath, doc.filename);
   } catch (error) {
     res.status(500).json({ message: error.message });

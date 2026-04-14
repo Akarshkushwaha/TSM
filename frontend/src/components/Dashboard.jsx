@@ -232,7 +232,7 @@ const Dashboard = () => {
                           {task.attachedDocuments.map((doc, index) => (
                             <a
                               key={index}
-                              href={`/api/tasks/${task._id}/documents/${index}`}
+                              href={`${import.meta.env.VITE_API_BASE_URL || ''}/api/tasks/${task._id}/documents/${index}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded hover:bg-blue-100 transition-colors"
