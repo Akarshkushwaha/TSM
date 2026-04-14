@@ -42,12 +42,42 @@ export const apiSlice = createApi({
         body: data,
       }),
     }),
+    updateTask: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/tasks/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Task'],
+    }),
+    deleteTask: builder.mutation({
+      query: (id) => ({
+        url: `/tasks/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Task'],
+    }),
+    getUsers: builder.query({
+      query: () => '/users',
+      providesTags: ['User'],
+    }),
+    deleteUser: builder.mutation({
+      query: (id) => ({
+        url: `/users/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['User'],
+    }),
   }),
 });
 
 export const {
   useGetTasksQuery,
   useCreateTaskMutation,
+  useUpdateTaskMutation,
+  useDeleteTaskMutation,
   useLoginUserMutation,
   useRegisterUserMutation,
+  useGetUsersQuery,
+  useDeleteUserMutation,
 } = apiSlice;
