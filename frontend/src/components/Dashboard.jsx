@@ -80,6 +80,31 @@ const Dashboard = () => {
     }
   };
 
+  const handleDownload = async (taskId, docIndex, filename) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/tasks/${taskId}/documents/${docIndex}`, {
+        headers: {
+          'Authorization': `Bearer ${userInfo.token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download error:', err);
+      alert('Failed to download document. It might have been deleted or the server is down.');
+    }
+  };
+
   const handleFilterChange = (setter) => (e) => {
     setter(e.target.value);
     setCurrentPage(1); // Reset to page 1 when filters change
@@ -230,18 +255,16 @@ const Dashboard = () => {
                         <p className="text-xs font-medium text-gray-500 mb-1">Attachments:</p>
                         <div className="flex flex-wrap gap-2">
                           {task.attachedDocuments.map((doc, index) => (
-                            <a
+                            <button
                               key={index}
-                              href={`${import.meta.env.VITE_API_BASE_URL || ''}/api/tasks/${task._id}/documents/${index}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded hover:bg-blue-100 transition-colors"
+                              onClick={() => handleDownload(task._id, index, doc.filename)}
+                              className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded hover:bg-blue-100 transition-colors border-none cursor-pointer"
                             >
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
                               </svg>
                               {doc.filename}
-                            </a>
+                            </button>
                           ))}
                         </div>
                       </div>
