@@ -4,3 +4,4 @@ uploads/
 dist/
 build/
 .DS_Store
+setup_git_and_deps.bat

@@ -16,6 +16,21 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage('');
+
+    // Client-side validation
+    if (!email || !password || !confirmPassword) {
+      setMessage('Please fill in all fields.');
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setMessage('Please enter a valid email address.');
+      return;
+    }
+    if (password.length < 6) {
+      setMessage('Password must be at least 6 characters.');
+      return;
+    }
     if (password !== confirmPassword) {
       setMessage('Passwords do not match');
       return;

@@ -58,8 +58,27 @@ export const apiSlice = createApi({
       invalidatesTags: ['Task'],
     }),
     getUsers: builder.query({
-      query: () => '/users',
+      query: (params) => ({
+        url: '/users',
+        params,
+      }),
       providesTags: ['User'],
+    }),
+    createUser: builder.mutation({
+      query: (data) => ({
+        url: '/users',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['User'],
+    }),
+    updateUser: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/users/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['User'],
     }),
     deleteUser: builder.mutation({
       query: (id) => ({
@@ -79,5 +98,7 @@ export const {
   useLoginUserMutation,
   useRegisterUserMutation,
   useGetUsersQuery,
+  useCreateUserMutation,
+  useUpdateUserMutation,
   useDeleteUserMutation,
 } = apiSlice;

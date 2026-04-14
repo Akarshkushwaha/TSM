@@ -11,8 +11,26 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const [validationError, setValidationError] = useState('');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setValidationError('');
+
+    // Client-side validation
+    if (!email || !password) {
+      setValidationError('Please fill in all fields.');
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setValidationError('Please enter a valid email address.');
+      return;
+    }
+    if (password.length < 6) {
+      setValidationError('Password must be at least 6 characters.');
+      return;
+    }
+
     try {
       const res = await login({ email, password }).unwrap();
       dispatch(setCredentials({ ...res }));
@@ -27,6 +45,7 @@ const Login = () => {
       <div className="w-full max-w-md bg-white rounded shadow-lg p-8">
         <h2 className="text-2xl font-bold mb-6 text-center text-blue-600">Login to TMS</h2>
         {error && <p className="text-red-500 text-sm mb-4">{error.data?.message || 'Login failed'}</p>}
+        {validationError && <p className="text-red-500 text-sm mb-4">{validationError}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-gray-700">Email</label>

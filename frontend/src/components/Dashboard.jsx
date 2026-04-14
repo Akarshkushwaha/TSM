@@ -5,21 +5,25 @@ import { logout } from '../slices/authSlice';
 import { useGetTasksQuery, useDeleteTaskMutation } from '../slices/apiSlice';
 import TaskModal from './TaskModal';
 
+const BACKEND_URL = 'http://localhost:5000';
+
 const Dashboard = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   
-  // Filter and Sort states
+  // Filter, Sort, and Pagination states
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [sortBy, setSortBy] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Pass filtering and sorting to API
+  // Pass filtering, sorting, and pagination to API
   const { data, isLoading, error } = useGetTasksQuery({
-    status: statusFilter,
-    priority: priorityFilter,
-    sortBy: sortBy,
+    status: statusFilter || undefined,
+    priority: priorityFilter || undefined,
+    sortBy: sortBy || undefined,
+    pageNumber: currentPage,
   });
 
   const [deleteTask] = useDeleteTaskMutation();
@@ -52,6 +56,11 @@ const Dashboard = () => {
         alert(err?.data?.message || 'Failed to delete task');
       }
     }
+  };
+
+  const handleFilterChange = (setter) => (e) => {
+    setter(e.target.value);
+    setCurrentPage(1); // Reset to page 1 when filters change
   };
 
   return (
@@ -93,7 +102,7 @@ const Dashboard = () => {
              <select 
                className="border-gray-300 rounded shadow-sm p-1 text-sm border"
                value={statusFilter}
-               onChange={(e) => setStatusFilter(e.target.value)}
+               onChange={handleFilterChange(setStatusFilter)}
              >
                <option value="">All</option>
                <option value="Todo">Todo</option>
@@ -107,7 +116,7 @@ const Dashboard = () => {
              <select 
                className="border-gray-300 rounded shadow-sm p-1 text-sm border"
                value={priorityFilter}
-               onChange={(e) => setPriorityFilter(e.target.value)}
+               onChange={handleFilterChange(setPriorityFilter)}
              >
                <option value="">All</option>
                <option value="Low">Low</option>
@@ -121,7 +130,7 @@ const Dashboard = () => {
              <select 
                className="border-gray-300 rounded shadow-sm p-1 text-sm border"
                value={sortBy}
-               onChange={(e) => setSortBy(e.target.value)}
+               onChange={handleFilterChange(setSortBy)}
              >
                <option value="">Recently Created</option>
                <option value="dueDate">Due Date</option>
@@ -135,66 +144,114 @@ const Dashboard = () => {
         ) : error ? (
           <p className="text-red-500 text-center py-4">Failed to load tasks</p>
         ) : (
-          <div className="space-y-4">
-            {data?.tasks?.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No tasks found. Click '+ New Task' to create one!</p>
-            ) : (
-              data?.tasks?.map(task => (
-                <div key={task._id} className="p-4 border border-gray-200 rounded shadow-sm hover:shadow-md transition-shadow flex flex-col sm:flex-row justify-between bg-white relative group">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg text-gray-800">{task.title}</h3>
-                    <p className="text-gray-600 text-sm mt-1 mb-3">{task.description}</p>
-                    
-                    <div className="flex flex-wrap gap-2 text-xs">
-                      <span className={`px-2 py-1 rounded-full font-medium 
-                        ${task.status === 'Done' ? 'bg-green-100 text-green-800' : 
-                          task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : 
-                          'bg-gray-100 text-gray-800'}`}
-                      >
-                        {task.status}
-                      </span>
-                      <span className={`px-2 py-1 rounded-full font-medium
-                         ${task.priority === 'High' ? 'bg-red-100 text-red-800' : 
-                           task.priority === 'Medium' ? 'bg-orange-100 text-orange-800' : 
-                           'bg-blue-100 text-blue-800'}`}
-                      >
-                        {task.priority} Priority
-                      </span>
-                      {task.dueDate && (
-                        <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full font-medium">
-                          Due: {new Date(task.dueDate).toLocaleDateString()}
-                        </span>
-                      )}
+          <>
+            <div className="space-y-4">
+              {data?.tasks?.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No tasks found. Click '+ New Task' to create one!</p>
+              ) : (
+                data?.tasks?.map(task => (
+                  <div key={task._id} className="p-4 border border-gray-200 rounded shadow-sm hover:shadow-md transition-shadow bg-white">
+                    <div className="flex flex-col sm:flex-row justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg text-gray-800">{task.title}</h3>
+                        <p className="text-gray-600 text-sm mt-1 mb-3">{task.description}</p>
+                        
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          <span className={`px-2 py-1 rounded-full font-medium 
+                            ${task.status === 'Done' ? 'bg-green-100 text-green-800' : 
+                              task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : 
+                              'bg-gray-100 text-gray-800'}`}
+                          >
+                            {task.status}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full font-medium
+                             ${task.priority === 'High' ? 'bg-red-100 text-red-800' : 
+                               task.priority === 'Medium' ? 'bg-orange-100 text-orange-800' : 
+                               'bg-blue-100 text-blue-800'}`}
+                          >
+                            {task.priority} Priority
+                          </span>
+                          {task.dueDate && (
+                            <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full font-medium">
+                              Due: {new Date(task.dueDate).toLocaleDateString()}
+                            </span>
+                          )}
+                          {task.assignedTo && (
+                            <span className="px-2 py-1 bg-teal-100 text-teal-800 rounded-full font-medium">
+                              Assigned: {task.assignedTo.email || task.assignedTo}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 sm:mt-0 flex flex-col items-end justify-start min-w-[120px]">
+                        <div className="flex gap-2">
+                           <button 
+                             onClick={() => handleEditTask(task)} 
+                             className="text-indigo-600 hover:text-indigo-800 text-sm font-medium border border-indigo-200 rounded px-2 py-1"
+                           >
+                             Edit
+                           </button>
+                           <button 
+                             onClick={() => handleDeleteTask(task._id)}
+                             className="text-red-600 hover:text-red-800 text-sm font-medium border border-red-200 rounded px-2 py-1"
+                           >
+                             Delete
+                           </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="mt-4 sm:mt-0 flex flex-col items-end justify-between min-w-[120px]">
-                    <div className="flex gap-2">
-                       <button 
-                         onClick={() => handleEditTask(task)} 
-                         className="text-indigo-600 hover:text-indigo-800 text-sm font-medium border border-indigo-200 rounded px-2 py-1"
-                       >
-                         Edit
-                       </button>
-                       <button 
-                         onClick={() => handleDeleteTask(task._id)}
-                         className="text-red-600 hover:text-red-800 text-sm font-medium border border-red-200 rounded px-2 py-1"
-                       >
-                         Delete
-                       </button>
-                    </div>
                     
+                    {/* Attached Documents - Clickable Links */}
                     {task.attachedDocuments && task.attachedDocuments.length > 0 && (
-                        <span className="text-xs text-gray-500 flex items-center gap-1 mt-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                            {task.attachedDocuments.length} files
-                        </span>
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <p className="text-xs font-medium text-gray-500 mb-1">Attachments:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {task.attachedDocuments.map((doc, index) => (
+                            <a
+                              key={index}
+                              href={`${BACKEND_URL}/uploads/${doc.filename}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded hover:bg-blue-100 transition-colors"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                              </svg>
+                              {doc.filename}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
-                </div>
-              ))
+                ))
+              )}
+            </div>
+
+            {/* Pagination Controls */}
+            {data?.pages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-6 pt-4 border-t">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  &larr; Previous
+                </button>
+                <span className="text-sm text-gray-600">
+                  Page {data?.page} of {data?.pages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, data?.pages))}
+                  disabled={currentPage >= data?.pages}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next &rarr;
+                </button>
+              </div>
             )}
-          </div>
+          </>
         )}
       </div>
 

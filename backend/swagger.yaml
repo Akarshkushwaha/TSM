@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Task Management System API
   version: 1.0.0
-  description: API documentation for the intern assignment Task Management System.
+  description: API documentation for the Task Management System. Supports JWT authentication, task/user CRUD, file uploads, filtering, sorting, and pagination.
 servers:
   - url: 'http://localhost:5000'
 paths:
@@ -17,6 +17,253 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                password:
+                  type: string
+                  example: password123
+                role:
+                  type: string
+                  enum: [user, admin]
+                  default: user
+      responses:
+        '201':
+          description: User created successfully
+        '400':
+          description: User already exists or invalid data
+  /api/auth/login:
+    post:
+      summary: Login user and receive JWT token
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '200':
+          description: Successful authentication, returns JWT token
+        '401':
+          description: Invalid credentials
+  /api/tasks:
+    get:
+      summary: Get all tasks for the authenticated user (admins see all)
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [Todo, In Progress, Done]
+          description: Filter by task status
+        - in: query
+          name: priority
+          schema:
+            type: string
+            enum: [Low, Medium, High]
+          description: Filter by task priority
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [dueDate, priority]
+          description: Sort results by field
+        - in: query
+          name: pageNumber
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+      responses:
+        '200':
+          description: Returns tasks array with pagination info
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a new task with optional file uploads
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [Todo, In Progress, Done]
+                priority:
+                  type: string
+                  enum: [Low, Medium, High]
+                dueDate:
+                  type: string
+                  format: date
+                assignedTo:
+                  type: string
+                  description: User ID to assign the task to
+                documents:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  maxItems: 3
+                  description: Up to 3 PDF documents
+      responses:
+        '201':
+          description: Task created successfully
+        '401':
+          description: Unauthorized
+  /api/tasks/{id}:
+    get:
+      summary: Get a specific task by ID
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Task ID
+      responses:
+        '200':
+          description: Task details with attached documents
+        '403':
+          description: Not authorized to view this task
+        '404':
+          description: Task not found
+    put:
+      summary: Update a task
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [Todo, In Progress, Done]
+                priority:
+                  type: string
+                  enum: [Low, Medium, High]
+                dueDate:
+                  type: string
+                  format: date
+                assignedTo:
+                  type: string
+                documents:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  maxItems: 3
+      responses:
+        '200':
+          description: Task updated successfully
+        '403':
+          description: Not authorized
+        '404':
+          description: Task not found
+    delete:
+      summary: Delete a task
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task removed
+        '403':
+          description: Not authorized
+        '404':
+          description: Task not found
+  /api/users:
+    get:
+      summary: Get all users (Admin only, paginated)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: pageNumber
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+      responses:
+        '200':
+          description: Returns users array with pagination info
+        '401':
+          description: Unauthorized
+        '403':
+          description: Admin access required
+    post:
+      summary: Create a new user (Admin only)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
               properties:
                 email:
                   type: string
@@ -29,14 +276,21 @@ paths:
         '201':
           description: User created
         '400':
-          description: User already exists / Invalid data
-  /api/auth/login:
-    post:
-      summary: Login user
+          description: User already exists
+  /api/users/{id}:
+    put:
+      summary: Update a user (Admin only)
       tags:
-        - Auth
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
       requestBody:
-        required: true
         content:
           application/json:
             schema:
@@ -46,56 +300,31 @@ paths:
                   type: string
                 password:
                   type: string
+                role:
+                  type: string
+                  enum: [user, admin]
       responses:
         '200':
-          description: Successful authentication
-  /api/tasks:
-    get:
-      summary: Get user tasks
+          description: User updated
+        '404':
+          description: User not found
+    delete:
+      summary: Delete a user (Admin only)
       tags:
-        - Tasks
+        - Users
       security:
         - bearerAuth: []
       parameters:
-        - in: query
-          name: status
-          schema:
-            type: string
-        - in: query
-          name: priority
+        - in: path
+          name: id
+          required: true
           schema:
             type: string
       responses:
         '200':
-          description: OK
-    post:
-      summary: Create a new task (multipart/form-data for PDF uploads)
-      tags:
-        - Tasks
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                title:
-                  type: string
-                description:
-                  type: string
-                priority:
-                  type: string
-                documents:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-                  maxItems: 3
-      responses:
-        '201':
-          description: Task created
+          description: User removed
+        '404':
+          description: User not found
 components:
   securitySchemes:
     bearerAuth:
