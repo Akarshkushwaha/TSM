@@ -170,6 +170,16 @@ const TaskModal = ({ isOpen, onClose, existingTask = null }) => {
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 p-2 border border-gray-300 rounded"
               onChange={handleFileChange}
             />
+            {documents && documents.length > 0 && (
+                <div className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                    <p className="font-semibold mb-1">Selected to upload:</p>
+                    <ul className="list-disc list-inside">
+                        {Array.from(documents).map((file, i) => (
+                            <li key={i}>{file.name}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
             {existingTask?.attachedDocuments && existingTask.attachedDocuments.length > 0 && (
                 <p className="text-xs text-gray-500 mt-1">
                     Currently has {existingTask.attachedDocuments.length} document(s) attached.
