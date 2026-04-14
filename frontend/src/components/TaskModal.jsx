@@ -8,7 +8,7 @@ const TaskModal = ({ isOpen, onClose, existingTask = null }) => {
   const [priority, setPriority] = useState('Medium');
   const [dueDate, setDueDate] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
-  const [documents, setDocuments] = useState(null);
+  const [documents, setDocuments] = useState([]);
 
   const [createTask, { isLoading: isCreating }] = useCreateTaskMutation();
   const [updateTask, { isLoading: isUpdating }] = useUpdateTaskMutation();
@@ -22,7 +22,7 @@ const TaskModal = ({ isOpen, onClose, existingTask = null }) => {
       setPriority(existingTask.priority || 'Medium');
       setDueDate(existingTask.dueDate ? existingTask.dueDate.substring(0, 10) : '');
       setAssignedTo(existingTask.assignedTo?._id || existingTask.assignedTo || '');
-      setDocuments(null);
+      setDocuments([]);
     } else {
       resetForm();
     }
@@ -35,16 +35,24 @@ const TaskModal = ({ isOpen, onClose, existingTask = null }) => {
     setPriority('Medium');
     setDueDate('');
     setAssignedTo('');
-    setDocuments(null);
+    setDocuments([]);
   };
 
   const handleFileChange = (e) => {
-    if (e.target.files.length > 3) {
-      alert('You can only upload up to 3 documents.');
+    const selectedFiles = Array.from(e.target.files);
+    
+    if (documents.length + selectedFiles.length > 3) {
+      alert('You can only upload up to 3 documents total.');
       e.target.value = '';
       return;
     }
-    setDocuments(e.target.files);
+
+    setDocuments((prev) => [...prev, ...selectedFiles]);
+    e.target.value = ''; // Reset input to allow picking the same file again if removed
+  };
+
+  const removeDocument = (index) => {
+    setDocuments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -170,12 +178,22 @@ const TaskModal = ({ isOpen, onClose, existingTask = null }) => {
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 p-2 border border-gray-300 rounded"
               onChange={handleFileChange}
             />
-            {documents && documents.length > 0 && (
-                <div className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                    <p className="font-semibold mb-1">Selected to upload:</p>
-                    <ul className="list-disc list-inside">
-                        {Array.from(documents).map((file, i) => (
-                            <li key={i}>{file.name}</li>
+            {documents.length > 0 && (
+                <div className="mt-2 text-xs text-blue-600 bg-blue-50 p-3 rounded border border-blue-100">
+                    <p className="font-semibold mb-2">Files ready to upload ({documents.length}/3):</p>
+                    <ul className="space-y-1">
+                        {documents.map((file, i) => (
+                            <li key={i} className="flex justify-between items-center group bg-white p-1 px-2 rounded border border-blue-100">
+                                <span className="truncate max-w-[200px]">{file.name}</span>
+                                <button 
+                                  type="button" 
+                                  onClick={() => removeDocument(i)}
+                                  className="text-red-500 hover:text-red-700 font-bold px-1"
+                                  title="Remove file"
+                                >
+                                  ✕
+                                </button>
+                            </li>
                         ))}
                     </ul>
                 </div>
