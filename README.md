@@ -2,6 +2,11 @@
 
 A Full-Stack Task Management application built with the **MERN stack** (MongoDB, Express, React, Node.js), containerized using **Docker**.
 
+## 🚀 Live Demo
+- **Frontend**: [https://tsm-git-main-akarshs-projects-79cac0bf.vercel.app](https://tsm-git-main-akarshs-projects-79cac0bf.vercel.app)
+- **Backend API**: [https://tsm-8c5p.onrender.com](https://tsm-8c5p.onrender.com)
+- **API Documentation**: [https://tsm-8c5p.onrender.com/api-docs](https://tsm-8c5p.onrender.com/api-docs)
+
 ## Features
 - **JWT Authentication & Authorization** (User vs Admin roles)
 - **CRUD** operations for Users and Tasks
